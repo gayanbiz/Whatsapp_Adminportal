@@ -549,7 +549,7 @@ export default function DashboardPage() {
         <Space>
           <WhatsAppOutlined style={{ fontSize: 24, color: '#25D366' }} />
           <Title level={4} style={{ margin: 0 }}>
-            WhatsApp Print Manager — Adminn
+            WhatsApp Print Manager — Admin
           </Title>
         </Space>
         <Space>
