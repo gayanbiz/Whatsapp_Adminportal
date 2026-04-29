@@ -172,6 +172,34 @@ export default function DashboardPage() {
 
   const filteredActive = useMemo(() => filterUsers(activeUsers), [filterUsers, activeUsers]);
   const filteredAll = useMemo(() => filterUsers(allUsers), [filterUsers, allUsers]);
+  const filteredTrialUsers = useMemo(
+    () =>
+      filterUsers(
+        allUsers.filter((u) => u.status === 'ACTIVE' && u.planType === 'TRIAL'),
+      ),
+    [filterUsers, allUsers],
+  );
+  const filteredAnnualUsers = useMemo(
+    () =>
+      filterUsers(
+        allUsers.filter((u) => u.status === 'ACTIVE' && u.planType === 'ANNUAL'),
+      ),
+    [filterUsers, allUsers],
+  );
+  const filteredTrialExpired = useMemo(
+    () =>
+      filterUsers(
+        allUsers.filter((u) => u.status === 'EXPIRED' && u.planType === 'TRIAL'),
+      ),
+    [filterUsers, allUsers],
+  );
+  const filteredAnnualExpired = useMemo(
+    () =>
+      filterUsers(
+        allUsers.filter((u) => u.status === 'EXPIRED' && u.planType === 'ANNUAL'),
+      ),
+    [filterUsers, allUsers],
+  );
 
   // ── Handlers ──
   const handleActivate = async (id: number, planType: 'TRIAL' | 'ANNUAL') => {
@@ -561,6 +589,62 @@ export default function DashboardPage() {
                     loading={loading}
                     pagination={{ pageSize: 10 }}
                     locale={{ emptyText: 'No active users' }}
+                  />
+                ),
+              },
+              {
+                key: 'trial',
+                label: `Trial Users (${filteredTrialUsers.length})`,
+                children: (
+                  <Table
+                    columns={activeColumns}
+                    dataSource={filteredTrialUsers}
+                    rowKey="id"
+                    loading={loading}
+                    pagination={{ pageSize: 10 }}
+                    locale={{ emptyText: 'No trial users' }}
+                  />
+                ),
+              },
+              {
+                key: 'trial-expired',
+                label: `Trial Expired (${filteredTrialExpired.length})`,
+                children: (
+                  <Table
+                    columns={allColumns}
+                    dataSource={filteredTrialExpired}
+                    rowKey="id"
+                    loading={loading}
+                    pagination={{ pageSize: 10 }}
+                    locale={{ emptyText: 'No expired trial users' }}
+                  />
+                ),
+              },
+              {
+                key: 'annual',
+                label: `Annual Users (${filteredAnnualUsers.length})`,
+                children: (
+                  <Table
+                    columns={activeColumns}
+                    dataSource={filteredAnnualUsers}
+                    rowKey="id"
+                    loading={loading}
+                    pagination={{ pageSize: 10 }}
+                    locale={{ emptyText: 'No annual users' }}
+                  />
+                ),
+              },
+              {
+                key: 'annual-expired',
+                label: `Annual Expired (${filteredAnnualExpired.length})`,
+                children: (
+                  <Table
+                    columns={allColumns}
+                    dataSource={filteredAnnualExpired}
+                    rowKey="id"
+                    loading={loading}
+                    pagination={{ pageSize: 10 }}
+                    locale={{ emptyText: 'No expired annual users' }}
                   />
                 ),
               },
