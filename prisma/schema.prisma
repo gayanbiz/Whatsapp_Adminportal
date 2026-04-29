@@ -12,8 +12,8 @@ model User {
   id            Int        @id @default(autoincrement())
   phoneNumber   String     @unique @map("phone_number")
   displayName   String?    @map("display_name")
-  status        UserStatus @default(PENDING)
-  planType      PlanType?  @map("plan_type")
+  status        UserStatus @default(ACTIVE)
+  planType      PlanType   @default(TRIAL) @map("plan_type")
   planStartDate DateTime?  @map("plan_start_date")
   planEndDate   DateTime?  @map("plan_end_date")
   createdAt     DateTime   @default(now()) @map("created_at")
@@ -23,7 +23,6 @@ model User {
 }
 
 enum UserStatus {
-  PENDING
   ACTIVE
   EXPIRED
   REJECTED

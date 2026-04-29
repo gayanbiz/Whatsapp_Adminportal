@@ -5,34 +5,35 @@ export async function POST(request: NextRequest) {
   try {
     const { phoneNumber, name } = await request.json();
 
-    const existing = await prisma.user.findUnique({
-      where: { phoneNumber },
-    });
+    const rows = await prisma.$queryRaw<
+      Array<{ id: number; status: string; display_name: string | null }>
+    >`SELECT id, status, display_name FROM users WHERE phone_number = ${phoneNumber} LIMIT 1`;
+
+    const existing = rows[0];
+
+    const now = new Date();
+    const endDate = new Date(now);
+    endDate.setDate(endDate.getDate() + 7);
 
     if (existing) {
-      if (existing.status === 'PENDING') {
-        return NextResponse.json({
-          success: true,
-          message: 'Trial request already submitted. Awaiting approval.',
-        });
-      }
       if (existing.status === 'ACTIVE') {
         return NextResponse.json({
           success: false,
           message: 'You already have an active plan.',
         });
       }
-      // Re-request for expired/rejected users
-      await prisma.user.update({
-        where: { id: existing.id },
-        data: {
-          status: 'PENDING',
-          displayName: name || existing.displayName,
-        },
-      });
+      await prisma.$executeRaw`
+        UPDATE users
+        SET status = 'ACTIVE',
+            plan_type = 'TRIAL',
+            plan_start_date = ${now},
+            plan_end_date = ${endDate},
+            display_name = ${name || existing.display_name}
+        WHERE id = ${existing.id}
+      `;
       return NextResponse.json({
         success: true,
-        message: 'Trial request submitted successfully.',
+        message: 'Trial activated successfully.',
       });
     }
 
@@ -40,13 +41,16 @@ export async function POST(request: NextRequest) {
       data: {
         phoneNumber,
         displayName: name,
-        status: 'PENDING',
+        status: 'ACTIVE',
+        planType: 'TRIAL',
+        planStartDate: now,
+        planEndDate: endDate,
       },
     });
 
     return NextResponse.json({
       success: true,
-      message: 'Trial request submitted successfully.',
+      message: 'Trial activated successfully.',
     });
   } catch {
     return NextResponse.json(

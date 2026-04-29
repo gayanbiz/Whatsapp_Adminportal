@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
   if (authResult instanceof NextResponse) return authResult;
 
   try {
-    const { phoneNumber, displayName, planType } = await request.json();
+    const { phoneNumber, displayName } = await request.json();
 
     // Check if user already exists
     const existing = await prisma.user.findUnique({ where: { phoneNumber } });
@@ -45,26 +45,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const now = new Date();
+    const endDate = new Date(now);
+    endDate.setDate(endDate.getDate() + 7);
+
     const data: Record<string, unknown> = {
       phoneNumber,
       displayName: displayName || null,
-      status: 'PENDING',
+      status: 'ACTIVE',
+      planType: 'TRIAL',
+      planStartDate: now,
+      planEndDate: endDate,
     };
-
-    // If a plan type is provided, activate immediately
-    if (planType) {
-      const now = new Date();
-      const endDate = new Date(now);
-      if (planType === 'TRIAL') {
-        endDate.setDate(endDate.getDate() + 7);
-      } else {
-        endDate.setFullYear(endDate.getFullYear() + 1);
-      }
-      data.status = 'ACTIVE';
-      data.planType = planType;
-      data.planStartDate = now;
-      data.planEndDate = endDate;
-    }
 
     const user = await prisma.user.create({ data: data as any });
     return NextResponse.json(user, { status: 201 });

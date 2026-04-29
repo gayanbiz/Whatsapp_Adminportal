@@ -22,11 +22,6 @@ export class UsersController {
     return this.usersService.findAll();
   }
 
-  @Get('pending')
-  findPending() {
-    return this.usersService.findPending();
-  }
-
   @Get('active')
   findActive() {
     return this.usersService.findActive();
@@ -34,9 +29,9 @@ export class UsersController {
 
   @Post()
   create(
-    @Body() body: { phoneNumber: string; displayName?: string; planType?: 'TRIAL' | 'ANNUAL' },
+    @Body() body: { phoneNumber: string; displayName?: string },
   ) {
-    return this.usersService.create(body.phoneNumber, body.displayName, body.planType);
+    return this.usersService.create(body.phoneNumber, body.displayName);
   }
 
   @Patch(':id/activate')

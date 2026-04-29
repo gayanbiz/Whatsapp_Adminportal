@@ -20,13 +20,6 @@ export class UsersService {
     });
   }
 
-  async findPending() {
-    return this.prisma.user.findMany({
-      where: { status: 'PENDING' },
-      orderBy: { createdAt: 'desc' },
-    });
-  }
-
   async findActive() {
     // Auto-expire
     await this.prisma.user.updateMany({
@@ -94,35 +87,27 @@ export class UsersService {
     return this.prisma.user.delete({ where: { id } });
   }
 
-  async create(phoneNumber: string, displayName?: string, planType?: 'TRIAL' | 'ANNUAL') {
+  async create(phoneNumber: string, displayName?: string) {
     // Check if user already exists
     const existing = await this.prisma.user.findUnique({ where: { phoneNumber } });
     if (existing) {
       throw new NotFoundException('User with this phone number already exists');
     }
 
-    const data: any = {
-      phoneNumber,
-      displayName: displayName || null,
-      status: 'PENDING',
-    };
+    const now = new Date();
+    const endDate = new Date(now);
+    endDate.setDate(endDate.getDate() + 7);
 
-    // If a plan type is provided, activate immediately
-    if (planType) {
-      const now = new Date();
-      const endDate = new Date(now);
-      if (planType === 'TRIAL') {
-        endDate.setDate(endDate.getDate() + 7);
-      } else {
-        endDate.setFullYear(endDate.getFullYear() + 1);
-      }
-      data.status = 'ACTIVE';
-      data.planType = planType;
-      data.planStartDate = now;
-      data.planEndDate = endDate;
-    }
-
-    return this.prisma.user.create({ data });
+    return this.prisma.user.create({
+      data: {
+        phoneNumber,
+        displayName: displayName || null,
+        status: 'ACTIVE',
+        planType: 'TRIAL',
+        planStartDate: now,
+        planEndDate: endDate,
+      },
+    });
   }
 
   async changePlan(id: number, planType: 'TRIAL' | 'ANNUAL') {

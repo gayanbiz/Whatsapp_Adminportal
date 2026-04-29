@@ -38,9 +38,8 @@ export const loginApi = (username: string, password: string) =>
 
 // ── Users ──
 export const getUsersApi = () => api.get('/users');
-export const getPendingUsersApi = () => api.get('/users/pending');
 export const getActiveUsersApi = () => api.get('/users/active');
-export const createUserApi = (data: { phoneNumber: string; displayName?: string; planType?: 'TRIAL' | 'ANNUAL' }) =>
+export const createUserApi = (data: { phoneNumber: string; displayName?: string }) =>
   api.post('/users', data);
 export const activateUserApi = (id: number, planType: 'TRIAL' | 'ANNUAL') =>
   api.patch(`/users/${id}/activate`, { planType });

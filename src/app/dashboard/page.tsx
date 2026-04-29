@@ -15,7 +15,6 @@ import {
   Statistic,
   Row,
   Col,
-  Badge,
   Input,
   Modal,
   Form,
@@ -23,7 +22,6 @@ import {
 } from 'antd';
 import {
   UserOutlined,
-  ClockCircleOutlined,
   CheckCircleOutlined,
   StopOutlined,
   DeleteOutlined,
@@ -39,11 +37,9 @@ import {
 } from '@ant-design/icons';
 import {
   getUsersApi,
-  getPendingUsersApi,
   getActiveUsersApi,
   activateUserApi,
   deactivateUserApi,
-  rejectUserApi,
   deleteUserApi,
   createUserApi,
   changePlanApi,
@@ -72,10 +68,9 @@ interface User {
 
 export default function DashboardPage() {
   const [allUsers, setAllUsers] = useState<User[]>([]);
-  const [pendingUsers, setPendingUsers] = useState<User[]>([]);
   const [activeUsers, setActiveUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('pending');
+  const [activeTab, setActiveTab] = useState('active');
   const [searchText, setSearchText] = useState('');
   const [addUserOpen, setAddUserOpen] = useState(false);
   const [addUserLoading, setAddUserLoading] = useState(false);
@@ -94,13 +89,11 @@ export default function DashboardPage() {
   const fetchData = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
     try {
-      const [allRes, pendingRes, activeRes] = await Promise.all([
+      const [allRes, activeRes] = await Promise.all([
         getUsersApi(),
-        getPendingUsersApi(),
         getActiveUsersApi(),
       ]);
       setAllUsers(allRes.data);
-      setPendingUsers(pendingRes.data);
       setActiveUsers(activeRes.data);
     } catch (err) {
       if (!silent) message.error('Failed to fetch data');
@@ -177,7 +170,6 @@ export default function DashboardPage() {
     [searchText],
   );
 
-  const filteredPending = useMemo(() => filterUsers(pendingUsers), [filterUsers, pendingUsers]);
   const filteredActive = useMemo(() => filterUsers(activeUsers), [filterUsers, activeUsers]);
   const filteredAll = useMemo(() => filterUsers(allUsers), [filterUsers, allUsers]);
 
@@ -204,16 +196,6 @@ export default function DashboardPage() {
     }
   };
 
-  const handleReject = async (id: number) => {
-    try {
-      await rejectUserApi(id);
-      message.success('Request rejected');
-      fetchData();
-    } catch (err) {
-      message.error('Failed to reject');
-    }
-  };
-
   const handleDelete = async (id: number) => {
     try {
       await deleteUserApi(id);
@@ -231,7 +213,6 @@ export default function DashboardPage() {
       await createUserApi({
         phoneNumber: values.phoneNumber,
         displayName: values.displayName || undefined,
-        planType: values.planType || undefined,
       });
       message.success('User added successfully');
       setAddUserOpen(false);
@@ -280,7 +261,6 @@ export default function DashboardPage() {
   // ── Tag renderers ──
   const getStatusTag = (status: string) => {
     const map: Record<string, { color: string; icon: React.ReactNode }> = {
-      PENDING: { color: 'orange', icon: <ClockCircleOutlined /> },
       ACTIVE: { color: 'green', icon: <CheckCircleOutlined /> },
       EXPIRED: { color: 'red', icon: <StopOutlined /> },
       REJECTED: { color: 'default', icon: <StopOutlined /> },
@@ -307,62 +287,6 @@ export default function DashboardPage() {
       </Tag>
     );
   };
-
-  // ── Columns for "New Requests" tab ──
-  const pendingColumns = [
-    {
-      title: 'Phone Number',
-      dataIndex: 'phoneNumber',
-      key: 'phoneNumber',
-      render: (phone: string) => (
-        <span style={{ fontWeight: 500 }}>+{phone}</span>
-      ),
-    },
-    {
-      title: 'Display Name',
-      dataIndex: 'displayName',
-      key: 'displayName',
-      render: (name: string | null) => name || '—',
-    },
-    {
-      title: 'Requested At',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      render: (date: string) => dayjs(date).format('YYYY-MM-DD HH:mm'),
-    },
-    {
-      title: 'Actions',
-      key: 'actions',
-      render: (_: any, record: User) => (
-        <Space>
-          <Button
-            type="primary"
-            size="small"
-            icon={<ExperimentOutlined />}
-            onClick={() => handleActivate(record.id, 'TRIAL')}
-          >
-            Trial (7 days)
-          </Button>
-          <Button
-            size="small"
-            icon={<CrownOutlined />}
-            style={{ borderColor: '#722ed1', color: '#722ed1' }}
-            onClick={() => handleActivate(record.id, 'ANNUAL')}
-          >
-            Annual Plan
-          </Button>
-          <Popconfirm
-            title="Reject this request?"
-            onConfirm={() => handleReject(record.id)}
-          >
-            <Button danger size="small" icon={<StopOutlined />}>
-              Reject
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
-    },
-  ];
 
   // ── Columns for "Active Users" tab ──
   const activeColumns = [
@@ -447,7 +371,6 @@ export default function DashboardPage() {
       key: 'status',
       render: (status: string) => getStatusTag(status),
       filters: [
-        { text: 'Pending', value: 'PENDING' },
         { text: 'Active', value: 'ACTIVE' },
         { text: 'Expired', value: 'EXPIRED' },
         { text: 'Rejected', value: 'REJECTED' },
@@ -566,7 +489,7 @@ export default function DashboardPage() {
       <Content style={{ padding: 24, background: '#f5f5f5' }}>
         {/* Stats Cards */}
         <Row gutter={16} style={{ marginBottom: 24 }}>
-          <Col span={6}>
+          <Col span={8}>
             <Card bordered={false}>
               <Statistic
                 title="Total Users"
@@ -575,17 +498,7 @@ export default function DashboardPage() {
               />
             </Card>
           </Col>
-          <Col span={6}>
-            <Card bordered={false}>
-              <Statistic
-                title="New Requests"
-                value={pendingUsers.length}
-                valueStyle={{ color: '#fa8c16' }}
-                prefix={<ClockCircleOutlined />}
-              />
-            </Card>
-          </Col>
-          <Col span={6}>
+          <Col span={8}>
             <Card bordered={false}>
               <Statistic
                 title="Active Users"
@@ -595,7 +508,7 @@ export default function DashboardPage() {
               />
             </Card>
           </Col>
-          <Col span={6}>
+          <Col span={8}>
             <Card bordered={false}>
               <Statistic
                 title="Expired"
@@ -637,28 +550,6 @@ export default function DashboardPage() {
             activeKey={activeTab}
             onChange={setActiveTab}
             items={[
-              {
-                key: 'pending',
-                label: (
-                  <Badge
-                    count={filteredPending.length}
-                    offset={[10, 0]}
-                    size="small"
-                  >
-                    <span>New Requests</span>
-                  </Badge>
-                ),
-                children: (
-                  <Table
-                    columns={pendingColumns}
-                    dataSource={filteredPending}
-                    rowKey="id"
-                    loading={loading}
-                    pagination={{ pageSize: 10 }}
-                    locale={{ emptyText: 'No pending requests' }}
-                  />
-                ),
-              },
               {
                 key: 'active',
                 label: `Active Users (${filteredActive.length})`,
@@ -715,12 +606,9 @@ export default function DashboardPage() {
           <Form.Item name="displayName" label="Display Name">
             <Input placeholder="Optional display name" />
           </Form.Item>
-          <Form.Item name="planType" label="Plan (optional — activates immediately)">
-            <Select allowClear placeholder="Leave empty for Pending status">
-              <Select.Option value="TRIAL">Trial (7 days)</Select.Option>
-              <Select.Option value="ANNUAL">Annual (1 year)</Select.Option>
-            </Select>
-          </Form.Item>
+          <Typography.Text type="secondary">
+            New users start with an active Trial plan (7 days).
+          </Typography.Text>
         </Form>
       </Modal>
 
