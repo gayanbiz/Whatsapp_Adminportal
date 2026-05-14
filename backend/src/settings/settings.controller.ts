@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Put, Post, Param, Body, UseGuards } from '@nestjs/common';
 import { SettingsService } from './settings.service';
 import { JwtAuthGuard } from '../auth/auth.guard';
 
@@ -22,6 +22,13 @@ export class SettingsController {
   @Put()
   @UseGuards(JwtAuthGuard)
   update(@Body() body: { key: string; value: string }) {
+    return this.settingsService.set(body.key, body.value);
+  }
+
+  // POST alias for environments that block PUT
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  updatePost(@Body() body: { key: string; value: string }) {
     return this.settingsService.set(body.key, body.value);
   }
 }

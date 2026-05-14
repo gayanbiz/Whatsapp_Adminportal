@@ -55,4 +55,4 @@ export const deleteUserApi = (id: number) =>
 // ── Settings ──
 export const getSettingsApi = () => api.get('/settings');
 export const updateSettingApi = (key: string, value: string) =>
-  api.put('/settings', { key, value });
+  api.post('/settings', { key, value });
