@@ -56,3 +56,4 @@ export const deleteUserApi = (id: number) =>
 export const getSettingsApi = () => api.get('/settings');
 export const updateSettingApi = (key: string, value: string) =>
   api.post('/settings', { key, value });
+

@@ -58,3 +58,4 @@ export async function PUT(request: NextRequest) {
 export async function POST(request: NextRequest) {
   return upsertSetting(request);
 }
+

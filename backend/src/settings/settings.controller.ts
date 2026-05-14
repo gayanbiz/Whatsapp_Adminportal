@@ -32,3 +32,4 @@ export class SettingsController {
     return this.settingsService.set(body.key, body.value);
   }
 }
+
